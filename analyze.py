@@ -326,13 +326,13 @@ class PoolEntries:
         title = by_col
         reduced_df = self.pool_entries[self.pool_entries['Tag'].isin(tags)]
         reduced_df = reduced_df[['Tag', by_col, 'DateTimeUTC']]
-        xformatter = FormatStrFormatter('%d')
+        yformatter = FormatStrFormatter('%d')
 
         if by_col.endswith('Bytes'):
             reduced_df = reduced_df.copy()
             reduced_df[[by_col]] = reduced_df[[by_col]].divide(1024 * 1024)
             title = f"{by_col} (MB)"
-            xformatter = FormatStrFormatter('%.3f')
+            yformatter = FormatStrFormatter('%.3f')
         else:
             title = f"{by_col} (n_allocs)"
 
@@ -342,7 +342,7 @@ class PoolEntries:
                         values=by_col,\
                         columns='Tag').plot(marker='.')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
-        ax.yaxis.set_major_formatter(xformatter)
+        ax.yaxis.set_major_formatter(yformatter)
         ax.set_title(title)
 
         colorScheme = 'seaborn'
