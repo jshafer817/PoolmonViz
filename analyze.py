@@ -15,6 +15,7 @@ import glob
 import dateutil
 import codecs
 from matplotlib.ticker import FormatStrFormatter
+import seaborn as sns
 
 class PoolEntries:
     def __init__(self):
@@ -338,12 +339,12 @@ class PoolEntries:
         ax = reduced_df.pivot(\
                         index='DateTimeUTC',\
                         values=by_col,\
-                        columns='Tag').plot()
+                        columns='Tag').plot(marker='.')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         ax.yaxis.set_major_formatter(xformatter)
         ax.set_title(title)
         
-        colorScheme = 'seaborn-notebook'
+        colorScheme = 'seaborn'
         plt.style.use([colorScheme])
         plt.style.context(colorScheme)
         
