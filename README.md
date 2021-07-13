@@ -1,4 +1,4 @@
-# poolmon-powershell
-Powershell script to view kernel memory pool tag information similar to poolmon
+# PoolmonViz
+A visualizer for poolmon tags plotted over time
 
-![Screenshot](Screenshot_1.PNG)
+![Screenshot](images/Screenshot_1.PNG)
