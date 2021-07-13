@@ -25,6 +25,8 @@ class PoolEntries:
         self.individual_data_frames = list()
         self.pool_entries = None
         self.digest_called = False
+    
+    # ------------------------------------------------------------------------
 
     def GetEncoding(self, filename:str) -> str:
         """
@@ -57,7 +59,8 @@ class PoolEntries:
             except:
                 return "utf-8"
 
-
+    # ------------------------------------------------------------------------
+    
     def add_csv_file(self, csv_file:str) -> None:
         """
         Read a CSV file and add all its entries to the pool
@@ -85,6 +88,8 @@ class PoolEntries:
             df['DateTimeUTC'],\
             format=('%Y-%m-%dT%H:%M:%S'))
         self.individual_data_frames.append(df)
+    
+    # ------------------------------------------------------------------------
 
     def add_totals_row(\
             self, \
@@ -116,6 +121,8 @@ class PoolEntries:
                 total_row_series[colname] = df[colname].sum()
         df = df.append(total_row_series, ignore_index=True)
         return df
+
+    # ------------------------------------------------------------------------
 
     def digest(self) -> pd.DataFrame:
         """
@@ -153,6 +160,8 @@ class PoolEntries:
             inplace=True,\
             ignore_index=True)
         return self.pool_entries
+    
+    # ------------------------------------------------------------------------
 
     def get_df(self) -> pd.DataFrame:
         """
@@ -167,6 +176,8 @@ class PoolEntries:
         """
         if not self.digest_called: self.digest()
         return self.pool_entries
+    
+    # ------------------------------------------------------------------------
 
     def get_all_tags(self) -> list:
         """
@@ -180,6 +191,8 @@ class PoolEntries:
         """
         if not self.digest_called: self.digest()
         return [t for t in self.pool_entries['Tag'].unique()]
+    
+    # ------------------------------------------------------------------------
 
     def get_highest_tags(\
             self,\
@@ -215,6 +228,8 @@ class PoolEntries:
                                 .sort_values([by_col], ascending=False)\
                                 .head(n_tags)
         return [row.name for _ , row in top_users.iterrows()]
+    
+    # ------------------------------------------------------------------------
 
     def get_most_changed_tags(\
             self,\
@@ -244,7 +259,7 @@ class PoolEntries:
         
         def get_change(x):
             (first, last) = tuple(x.to_numpy()[[0,-1]])
-            return abs(first - last)
+            return last - first
         
         if ignore_columns is None or not isinstance(ignore_columns, list):
             ignore_columns = []
@@ -260,6 +275,8 @@ class PoolEntries:
                 .head(n_tags)
                 
         return [row.name for _ , row in g.iterrows()]
+    
+    # ------------------------------------------------------------------------
         
 def read_directory(dirname:str) -> PoolEntries:
     """
