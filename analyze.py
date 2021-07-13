@@ -22,6 +22,7 @@ class PoolEntries:
     def __init__(self):
         self.individual_data_frames = list()
         self.pool_entries = None
+        self.digest_called = False
         
     def GetEncoding(self, filename:str) -> str:
         """
@@ -124,9 +125,43 @@ class PoolEntries:
             Returns the DataFrame
 
         """
+        all_dfs = []
+        self.digest_called = True
         for df in self.individual_data_frames:
             df = self.add_totals_row(df)
-        pass
+            all_dfs.append(df)
+        self.pool_entries = pd.concat(all_dfs)
+        del(self.individual_data_frames)
+        self.individual_data_frames = None
+        
+        # Sort by timestamp
+        # First find the timestamp column name
+        col_types = {i:str(self.pool_entries.dtypes[i]) for i in df.columns}
+        date_col_name = None
+        for colname, coltype in col_types.items():
+            if coltype.startswith('datetime'): date_col_name = colname
+        # Then sort by that column
+        self.pool_entries.sort_values(\
+            date_col_name,\
+            ascending=True,\
+            inplace=True,\
+            ignore_index=True)
+        print(self.pool_entries)
+        return self.pool_entries
+    
+    def get_df(self) -> pd.DataFrame:
+        """
+        Get the dataframe
+
+        Returns
+        -------
+        pd.DataFrame
+            Returns the dataframe that is an aggregate of all time steps
+            and includes TOTAL counts as well
+
+        """
+        if not self.digest_called: self.digest()
+        return self.pool_entries
 
 def read_directory(dirname:str) -> PoolEntries:
     """
@@ -146,7 +181,7 @@ def read_directory(dirname:str) -> PoolEntries:
     pe = PoolEntries()
     for fname in glob.glob(f"{dirname}/*pool.csv"):
         pe.add_csv_file(fname)
-    pe.digest()
+    df = pe.get_df()
     return pe
 
 def main():
