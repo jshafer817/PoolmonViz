@@ -17,6 +17,10 @@ from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
 
 class PoolEntries:
+    VALID_COLUMNS = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
+              'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
+    VALID_TIME_COLUMNS = ['DateTime', 'DateTimeUTC']
+        
     def __init__(self):
         self.individual_data_frames = list()
         self.pool_entries = None
@@ -311,12 +315,10 @@ class PoolEntries:
             DESCRIPTION.
 
         """
-        if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
+        if timestamp_tag not in PoolEntries.VALID_TIME_COLUMNS:
             raise Exception('Invalid timestamp tag')
 
-        valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
-                      'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
-        if by_col not in valid_cols:
+        if by_col not in PoolEntries.VALID_COLUMNS:
             raise Exception('Invalid column name')
 
         if None is not rcparams: plt.rcParams.update(rcparams)
@@ -398,12 +400,10 @@ class PoolEntries:
 
         """
 
-        if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
+        if timestamp_tag not in PoolEntries.VALID_TIME_COLUMNS:
             raise Exception('Invalid timestamp tag')
 
-        valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
-                      'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
-        if by_col not in valid_cols:
+        if by_col not in PoolEntries.VALID_COLUMNS:
             raise Exception('Invalid column name')
 
         if None is include_tags or not isinstance(include_tags, list):
