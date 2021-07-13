@@ -166,40 +166,85 @@ Function Get-Pool() {
 	}
 	[System.Runtime.InteropServices.Marshal]::FreeHGlobal($ptr)
 }
-$expression = 'Get-Pool'
-if ($sortvalue) {
-	$expression += "|Sort-Object -Property $sortvalue"
-	if ($sortdir -eq 'Descending') {
-		$expression += ' -Descending'
-	}
-}
-if ($top -gt 0) {
-	$expression += "|Select-Object -First $top"
-}
-if ($values) {
-	$expression += "|Select-Object $values"
-}
-if ($view -eq 'csv') {
-	$expression += '|ConvertTo-Csv -NoTypeInformation'
-} elseif ($view -eq 'grid') {
-	$expression += '|Out-GridView -Title "Kernel Memory Pool (captured $(Get-Date -Format "dd/MM/yyyy HH:mm:ss"))" -Wait'
-} elseif ($view -eq 'table') {
-	$expression += '|Format-Table *'
-}
-if ($loop -gt 0 -and $view -ne 'grid') {
-	$loopcount = 0
-	while ($true) {
-		$loopcount++
-		if ($loopcount -eq 1) {
-			Invoke-Expression $expression
-			if ($view -eq 'csv') {
-				$expression += '|Select-Object -skip 1'
-			}
-		} else {
-			Invoke-Expression $expression
+
+
+function Print-Pool {
+    param (
+	    [string[]]$tags,
+	    [string[]]$values,
+	    [string]$sortvalue = 'TotalUsed',
+	    [string]$sortdir = 'Descending',
+	    [int]$top = 0,
+	    [string]$view = 'table',
+	    [string]$tagfile = 'pooltag.txt',
+	    [int]$loop = 0
+    )
+    $expression = 'Get-Pool'
+    if ($sortvalue) {
+	    $expression += '|Sort-Object -Property $sortvalue'
+	    if ($sortdir -eq 'Descending') {
+		    $expression += ' -Descending'
+	    }
+    }
+    if ($top -gt 0) {
+	    $expression += '|Select-Object -First $top'
+    }
+    if ($values) {
+	    $expression += '|Select-Object $values'
+    }
+    if ($view -eq 'csv') {
+	    $expression += '|ConvertTo-Csv -NoTypeInformation'
+    } elseif ($view -eq 'grid') {
+	    $expression += '|Out-GridView -Title "Kernel Memory Pool (captured $(Get-Date -Format "dd/MM/yyyy HH:mm:ss"))" -Wait'
+    } elseif ($view -eq 'table') {
+	    $expression += '|Format-Table *'
+    }
+    if ($loop -gt 0 -and $view -ne 'grid') {
+	    $loopcount = 0
+	    while ($true) {
+		    $loopcount++
+		    if ($loopcount -eq 1) {
+			    Invoke-Expression $expression
+			    if ($view -eq 'csv') {
+				    $expression += '|Select-Object -skip 1'
+			    }
+		    } else {
+			    Invoke-Expression $expression
+		    }
+		    Start-Sleep -Seconds $loop
+	    }
+    } else {
+	    Invoke-Expression $expression
+    }
+ }
+
+
+function Poolmon-Powershell {
+    Param(
+        [parameter(position=1)] $SleepDurationInSeconds,
+        [parameter(position=2)] $HoursToRun
+    )
+    $startDate = Get-Date
+    $MillisToRunFor = $HoursToRun * 60 * 60 * 1000
+
+    do
+    {
+        $thisDateDate = Get-Date
+        $thisDate = Get-Date -UFormat "%Y.%m.%d_%H.%M.%S_%s"
+        $poolMonFileName = $thisDate + ".pool.csv"
+
+        $newTimeSpan = New-TimeSpan -Start $startDate -End $thisDateDate
+		
+		Print-Pool -view csv | Out-File -FilePath $poolMonFileName
+		
+		if ($newTimeSpan.TotalMilliseconds -lt $MillisToRunFor)
+		{
+			Start-Sleep -Seconds $SleepDurationInSeconds
 		}
-		Start-Sleep -Seconds $loop
-	}
-} else {
-	Invoke-Expression $expression
+    } while ($newTimeSpan.TotalMilliseconds -lt $MillisToRunFor)
 }
+
+# TODO: To use this script, modify the values below
+# Right now the script is set to run every 15 minutes, and will continue
+# running for 60 hours
+Poolmon-Powershell -SleepDurationInSeconds 60 -HoursToRun 48
