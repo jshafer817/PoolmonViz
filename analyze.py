@@ -438,7 +438,8 @@ class PoolEntries:
         self.show_plot(\
                 tags=all_tags,\
                 timestamp_tag=timestamp_tag,\
-                by_col=by_col, rcparams=rcparams)
+                by_col=by_col,\
+                rcparams=rcparams)
 
     # -----------------------------------------------------------------------
 
