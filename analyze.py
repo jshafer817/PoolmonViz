@@ -17,13 +17,15 @@ import argparse
 import glob
 import dateutil
 import codecs
+import typing
+from typing import TypeVar
 
 class PoolEntries:
     def __init__(self):
         self.individual_data_frames = list()
         self.pool_entries = None
         self.digest_called = False
-        
+
     def GetEncoding(self, filename:str) -> str:
         """
         Try to guess the encoding of a file
@@ -55,7 +57,7 @@ class PoolEntries:
             except:
                 return "utf-8"
 
-    
+
     def add_csv_file(self, csv_file:str) -> None:
         """
         Read a CSV file and add all its entries to the pool
@@ -83,7 +85,7 @@ class PoolEntries:
             df['DateTimeUTC'],\
             format=('%Y-%m-%dT%H:%M:%S'))
         self.individual_data_frames.append(df)
-        
+
     def add_totals_row(\
             self, \
             df:pd.DataFrame) -> pd.DataFrame:
@@ -114,7 +116,7 @@ class PoolEntries:
                 total_row_series[colname] = df[colname].sum()
         df = df.append(total_row_series, ignore_index=True)
         return df
-    
+
     def digest(self) -> pd.DataFrame:
         """
         Call this after adding all CSV files
@@ -125,15 +127,19 @@ class PoolEntries:
             Returns the DataFrame
 
         """
-        all_dfs = []
+
+        if self.digest_called:
+            raise Exception("digest() called again")
         self.digest_called = True
+
+        all_dfs = []
         for df in self.individual_data_frames:
             df = self.add_totals_row(df)
             all_dfs.append(df)
         self.pool_entries = pd.concat(all_dfs)
         del(self.individual_data_frames)
         self.individual_data_frames = None
-        
+
         # Sort by timestamp
         # First find the timestamp column name
         col_types = {i:str(self.pool_entries.dtypes[i]) for i in df.columns}
@@ -146,9 +152,8 @@ class PoolEntries:
             ascending=True,\
             inplace=True,\
             ignore_index=True)
-        print(self.pool_entries)
         return self.pool_entries
-    
+
     def get_df(self) -> pd.DataFrame:
         """
         Get the dataframe
@@ -163,6 +168,99 @@ class PoolEntries:
         if not self.digest_called: self.digest()
         return self.pool_entries
 
+    def get_all_tags(self) -> list:
+        """
+        returns all tags that we've seen so far
+
+        Returns
+        -------
+        List(str)
+            All tags.
+
+        """
+        if not self.digest_called: self.digest()
+        return [t for t in self.pool_entries['Tag'].unique()]
+
+    def get_highest_tags(\
+            self,\
+            n_tags:int,\
+            by_col:str="TotalUsedBytes",\
+            ignore_columns:list=[]) -> list:
+        """
+        Get the list of tags that have the highest usage        
+
+        Parameters
+        ----------
+        n_tags : int
+            Number of highest tags to get.
+        by_col : str, optional
+            Which column to calculate the highest usage by.
+            The default is "TotalUsedBytes".
+        ignore_columns : list, optional
+            These columns will not be considered for efficiency.
+            The default is [].
+        Returns
+        -------
+        List(str)
+            List of tags that have the highest usage.
+        """
+        if ignore_columns is None or not isinstance(ignore_columns, list):
+            ignore_columns = []
+        ignore_columns.append('TOTAL')
+        reduced_df = \
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_columns)]
+        reduced_df = reduced_df[['Tag', by_col]]
+        top_users = reduced_df.groupby(['Tag'])\
+                                .max()\
+                                .sort_values([by_col], ascending=False)\
+                                .head(n_tags)
+        return [row.name for _ , row in top_users.iterrows()]
+
+    def get_most_changed_tags(\
+            self,\
+            n_tags:int,\
+            by_col:str="TotalUsedBytes",\
+            ignore_columns:list=[]) -> list:
+        """
+        Get the list of tags that see the highest change
+        Highest change here is the difference between the first and the
+        last entry
+
+        Parameters
+        ----------
+        n_tags : int
+            Number of highest tags to get.
+        by_col : str, optional
+            Which column to calculate the highest usage by.
+            The default is "TotalUsedBytes".
+        ignore_columns : list, optional
+            These columns will not be considered for efficiency.
+            The default is [].
+        Returns
+        -------
+        List(str)
+            List of tags that have the highest usage.
+        """
+        
+        def get_change(x):
+            (first, last) = tuple(x.to_numpy()[[0,-1]])
+            return abs(first - last)
+        
+        if ignore_columns is None or not isinstance(ignore_columns, list):
+            ignore_columns = []
+        ignore_columns.append('TOTAL')
+        reduced_df = \
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_columns)]
+        reduced_df = reduced_df[['Tag', by_col]]
+        
+        g = reduced_df[['Tag', by_col]]\
+                .groupby(['Tag'])\
+                .agg(get_change)\
+                .sort_values([by_col], ascending=False)\
+                .head(n_tags)
+                
+        return [row.name for _ , row in g.iterrows()]
+        
 def read_directory(dirname:str) -> PoolEntries:
     """
     Reads a directory and returns all the items in a PoolEntry structure
@@ -182,6 +280,9 @@ def read_directory(dirname:str) -> PoolEntries:
     for fname in glob.glob(f"{dirname}/*pool.csv"):
         pe.add_csv_file(fname)
     df = pe.get_df()
+    print(pe.get_highest_tags(5, ignore_columns=['MmSt']))
+    print(pe.get_most_changed_tags(5, ignore_columns=[]))
+    alltags = pe.get_all_tags()
     return pe
 
 def main():
@@ -196,6 +297,6 @@ def main():
     """
     read_directory(".")
 
-    
+
 if "__main__" == __name__:
     main()
