@@ -331,6 +331,8 @@ class PoolEntries:
             reduced_df[[by_col]] = reduced_df[[by_col]].divide(1024 * 1024)
             title = f"{by_col} (MB)"
             xformatter = FormatStrFormatter('%.3f')
+        else:
+            title = f"{by_col} (n_allocs)"
             
         print("just about to plot")
         ax = reduced_df.pivot(\
