@@ -14,9 +14,13 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import argparse
+import glob
+import dateutil
+import codecs
 
 class PoolEntries:
     def __init__(self):
+        self.individual_data_frames = list()
         self.pool_entries = None
         
     def GetEncoding(self, filename:str) -> str:
@@ -37,12 +41,12 @@ class PoolEntries:
         with open(filename, mode="rb") as f:
             fbytes = f.read(64)
             BOMS = (
-                (BOM_UTF8, "utf-8"),
-                (BOM_UTF16, "utf-16"),
-                (BOM_UTF32_BE, "utf-32be"),
-                (BOM_UTF32_LE, "utf-32le"),
-                (BOM_UTF16_BE, "utf-16be"),
-                (BOM_UTF16_LE, "utf-16le"),
+                (codecs.BOM_UTF8, "utf-8"),
+                (codecs.BOM_UTF16, "utf-16"),
+                (codecs.BOM_UTF32_BE, "utf-32be"),
+                (codecs.BOM_UTF32_LE, "utf-32le"),
+                (codecs.BOM_UTF16_BE, "utf-16be"),
+                (codecs.BOM_UTF16_LE, "utf-16le"),
             )
             try:
                 return [encoding for bom, encoding in BOMS \
@@ -66,9 +70,87 @@ class PoolEntries:
             No return.
 
         """
+        df = pd.read_csv(\
+            csv_file,\
+            encoding=self.GetEncoding(csv_file),\
+            parse_dates=True,\
+            date_parser=dateutil.parser.parser)
+        df['DateTime'] = pd.to_datetime(\
+            df['DateTime'],\
+            format=('%Y-%m-%dT%H:%M:%S'))
+        df['DateTimeUTC'] = pd.to_datetime(\
+            df['DateTimeUTC'],\
+            format=('%Y-%m-%dT%H:%M:%S'))
+        self.individual_data_frames.append(df)
         
+    def add_totals_row(\
+            self, \
+            df:pd.DataFrame) -> pd.DataFrame:
+        """
+        Individual CSV files have all the tags at that moment, and each
+        entry forms a tag. But there is no tag for all the tags combined.
+        This function adds an entry for the total at any instance.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input dataframe, this is one full CSV file equivalent at an
+            instance
+        templateDf : TYPE
+            The template of the dataframe
+
+        Returns
+        -------
+        pd.DataFrame
+            The Dataframe with a total's row added
+
+        """  
+        column_types = {i:str(df.dtypes[i]) for i in df.columns}
+        total_row_series = df.loc[0].copy()
+        total_row_series["Tag"] = "TOTAL"
+        for colname, coltype in column_types.items():
+            if coltype.startswith('int'):
+                total_row_series[colname] = df[colname].sum()
+        df = df.append(total_row_series, ignore_index=True)
+        return df
+    
+    def digest(self) -> pd.DataFrame:
+        """
+        Call this after adding all CSV files
+
+        Returns
+        -------
+        pd.DataFrame
+            Returns the DataFrame
+
+        """
+        for df in self.individual_data_frames:
+            df = self.add_totals_row(df)
+        pass
+
+def read_directory(dirname:str) -> PoolEntries:
+    """
+    Reads a directory and returns all the items in a PoolEntry structure
+
+    Parameters
+    ----------
+    dirname : str
+        Name of the directory.
+
+    Returns
+    -------
+    PoolEntries
+        The entries from all the CSV files in the directory.
+
+    """    
+    pe = PoolEntries()
+    for fname in glob.glob(f"{dirname}/*pool.csv"):
+        pe.add_csv_file(fname)
+    pe.digest()
+    return pe
 
 def main():
+    """
     parser = argparse.ArgumentParser("Analyze Poolmon")
     parser.add_argument(\
                         "-d",\
@@ -76,6 +158,9 @@ def main():
                         help="The directory where the CSV files reside",\
                         required=True)
     args = parser.parse_args()
+    """
+    read_directory(".")
+
     
 if "__main__" == __name__:
     main()
