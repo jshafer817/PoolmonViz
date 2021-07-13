@@ -8,17 +8,13 @@ This script helps analyze memory leaks
 """
 
 import pandas as pd
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-import sys
-import os
+import matplotlib.dates as mdates
 import argparse
 import glob
 import dateutil
 import codecs
-import typing
-from typing import TypeVar
+from matplotlib.ticker import FormatStrFormatter
 
 class PoolEntries:
     def __init__(self):
@@ -159,6 +155,9 @@ class PoolEntries:
             ascending=True,\
             inplace=True,\
             ignore_index=True)
+        
+        self.pool_entries['TotalDiff'] = \
+            self.pool_entries['PagedDiff'] + self.pool_entries['NonPagedDiff']
         return self.pool_entries
     
     # ------------------------------------------------------------------------
@@ -198,7 +197,7 @@ class PoolEntries:
             self,\
             n_tags:int,\
             by_col:str="TotalUsedBytes",\
-            ignore_columns:list=[]) -> list:
+            ignore_tags:list=[]) -> list:
         """
         Get the list of tags that have the highest usage        
 
@@ -209,7 +208,7 @@ class PoolEntries:
         by_col : str, optional
             Which column to calculate the highest usage by.
             The default is "TotalUsedBytes".
-        ignore_columns : list, optional
+        ignore_tags : list, optional
             These columns will not be considered for efficiency.
             The default is [].
         Returns
@@ -217,11 +216,11 @@ class PoolEntries:
         List(str)
             List of tags that have the highest usage.
         """
-        if ignore_columns is None or not isinstance(ignore_columns, list):
-            ignore_columns = []
-        ignore_columns.append('TOTAL')
+        if ignore_tags is None or not isinstance(ignore_tags, list):
+            ignore_tags = []
+        ignore_tags.append('TOTAL')
         reduced_df = \
-            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_columns)]
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
         reduced_df = reduced_df[['Tag', by_col]]
         top_users = reduced_df.groupby(['Tag'])\
                                 .max()\
@@ -235,7 +234,7 @@ class PoolEntries:
             self,\
             n_tags:int,\
             by_col:str="TotalUsedBytes",\
-            ignore_columns:list=[]) -> list:
+            ignore_tags:list=[]) -> list:
         """
         Get the list of tags that see the highest change
         Highest change here is the difference between the first and the
@@ -248,7 +247,7 @@ class PoolEntries:
         by_col : str, optional
             Which column to calculate the highest usage by.
             The default is "TotalUsedBytes".
-        ignore_columns : list, optional
+        ignore_tags : list, optional
             These columns will not be considered for efficiency.
             The default is [].
         Returns
@@ -261,11 +260,11 @@ class PoolEntries:
             (first, last) = tuple(x.to_numpy()[[0,-1]])
             return last - first
         
-        if ignore_columns is None or not isinstance(ignore_columns, list):
-            ignore_columns = []
-        ignore_columns.append('TOTAL')
+        if ignore_tags is None or not isinstance(ignore_tags, list):
+            ignore_tags = []
+        ignore_tags.append('TOTAL')
         reduced_df = \
-            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_columns)]
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
         reduced_df = reduced_df[['Tag', by_col]]
         
         g = reduced_df[['Tag', by_col]]\
@@ -277,6 +276,172 @@ class PoolEntries:
         return [row.name for _ , row in g.iterrows()]
     
     # ------------------------------------------------------------------------
+    
+    def show_plot(\
+            self,\
+            tags: list,\
+            timestamp_tag:str='DateTimeUTC',
+            by_col:str='TotalUsedBytes',
+            rcparams:dict=None) -> None:
+        """
+        Plot a set of tags and display
+
+        Parameters
+        ----------
+        tags : list
+            List of tags to plot
+        timestamp_tag : str, optional
+            Timestamp, localtime or UTC. The default is 'DateTimeUTC'.
+            The other valid value is DateTime
+        by_col : str, optional
+            Which column to look at. The default is 'TotalUsedBytes'.
+            Other possible values are:
+                PagedDiff
+                NonPagedDiff,
+                TotalDiff,
+                PagedUsedBytes,
+                NonPagedUsedBytes,
+                TotalUsedBytes
+        rcparams : dict, optional
+            rcParams for matplotlib. The default is None.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
+        if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
+            raise Exception('Invalid timestamp tag')
+        
+        valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
+                      'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
+        if by_col not in valid_cols:
+            raise Exception('Invalid column name')
+            
+        if None is not rcparams: plt.rcParams.update(rcparams)
+        
+        title = by_col
+        reduced_df = self.pool_entries[self.pool_entries['Tag'].isin(tags)]
+        reduced_df = reduced_df[['Tag', by_col, 'DateTimeUTC']]
+        xformatter = FormatStrFormatter('%d')
+        
+        if by_col.endswith('Bytes'):
+            reduced_df = reduced_df.copy()
+            reduced_df[[by_col]] = reduced_df[[by_col]].divide(1024 * 1024)
+            title = f"{by_col} (MB)"
+            xformatter = FormatStrFormatter('%.3f')
+            
+        print("just about to plot")
+        ax = reduced_df.pivot(\
+                        index='DateTimeUTC',\
+                        values=by_col,\
+                        columns='Tag').plot()
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
+        ax.yaxis.set_major_formatter(xformatter)
+        ax.set_title(title)
+        
+        colorScheme = 'seaborn-notebook'
+        plt.style.use([colorScheme])
+        plt.style.context(colorScheme)
+        
+        plt.show()
+        
+    # -----------------------------------------------------------------------
+    def do_plot(\
+            self,\
+            by_col:str='TotalUsedBytes',\
+            timestamp_tag:str='DateTimeUTC',\
+            ignore_tags:list=None,\
+            include_tags:list=None,\
+            rcparams:dict=None,\
+            n_most_changed:int=5,\
+            n_highest:int=5) -> None:
+        """
+        Plot a column
+
+        Parameters
+        ----------
+        by_col : str, optional
+            The column to plot. The default is 'TotalUsedBytes'.
+            Other possible values are:
+                PagedDiff
+                NonPagedDiff,
+                TotalDiff,
+                PagedUsedBytes,
+                NonPagedUsedBytes,
+                TotalUsedBytes
+        timestamp_tag : str, optional
+            Whether to use localtime or UTC. The default is 'DateTimeUTC'.
+        ignore_tags : list, optional
+            List of tags to ignore. The default is None.
+        include_tags : list, optional
+            List of tags to include. The default is None.
+        rcparams : dict, optional
+            rcParams for matplotlib configuration. The default is None.
+        n_most_changed : int, optional
+            Number of tags that show highest increase. The default is 5.
+        n_highest : int, optional
+            Number of tags that have highest peak usage. The default is 5.
+
+        Raises
+        ------
+        Exception
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
+
+        if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
+            raise Exception('Invalid timestamp tag')
+            
+        valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
+                      'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
+        if by_col not in valid_cols:
+            raise Exception('Invalid column name')
+            
+        if None is include_tags or not isinstance(include_tags, list):
+            include_tags = []
+            
+        if not self.digest_called: self.digest()
+        
+        most_changed_tags = []
+        if n_most_changed > 0:
+            most_changed_tags = self.get_most_changed_tags(\
+                                            n_tags=n_most_changed,\
+                                            by_col=by_col,\
+                                            ignore_tags=ignore_tags)
+        highest_tags = []
+        if n_highest > 0:
+            highest_tags = self.get_highest_tags(\
+                                            n_tags=n_highest,\
+                                            by_col=by_col,\
+                                            ignore_tags=ignore_tags)
+                
+        all_tags = ['TOTAL']
+        for t in include_tags:
+            if t not in all_tags:
+                all_tags.append(t)
+        for t in most_changed_tags:
+            if t not in all_tags:
+                all_tags.append(t)
+        for t in highest_tags:
+            if t not in all_tags:
+                all_tags.append(t)
+        
+        self.show_plot(\
+                tags=all_tags,\
+                timestamp_tag=timestamp_tag,\
+                by_col=by_col, rcparams=rcparams)
+            
+    # -----------------------------------------------------------------------
+    
+# ---------------------------------------------------------------------------
+        
         
 def read_directory(dirname:str) -> PoolEntries:
     """
@@ -296,11 +461,7 @@ def read_directory(dirname:str) -> PoolEntries:
     pe = PoolEntries()
     for fname in glob.glob(f"{dirname}/*pool.csv"):
         pe.add_csv_file(fname)
-    df = pe.get_df()
-    print(pe.get_highest_tags(5, ignore_columns=['MmSt']))
-    print(pe.get_most_changed_tags(5, ignore_columns=[]))
-    alltags = pe.get_all_tags()
-    return pe
+    pe.do_plot(by_col='TotalDiff')
 
 def main():
     """
