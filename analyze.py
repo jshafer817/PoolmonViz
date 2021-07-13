@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # Author: Rajbir Bhattacharjee
-# Email: rajbir.bhattacharjee@gmail.com
 
 """
-This script helps analyze memory leaks
+This script helps analyze memory leaks. It plots a graph for each tag.
 """
 
 import pandas as pd
@@ -22,7 +21,7 @@ class PoolEntries:
         self.individual_data_frames = list()
         self.pool_entries = None
         self.digest_called = False
-    
+
     # ------------------------------------------------------------------------
 
     def GetEncoding(self, filename:str) -> str:
@@ -57,7 +56,7 @@ class PoolEntries:
                 return "utf-8"
 
     # ------------------------------------------------------------------------
-    
+
     def add_csv_file(self, csv_file:str) -> None:
         """
         Read a CSV file and add all its entries to the pool
@@ -85,7 +84,7 @@ class PoolEntries:
             df['DateTimeUTC'],\
             format=('%Y-%m-%dT%H:%M:%S'))
         self.individual_data_frames.append(df)
-    
+
     # ------------------------------------------------------------------------
 
     def add_totals_row(\
@@ -156,11 +155,11 @@ class PoolEntries:
             ascending=True,\
             inplace=True,\
             ignore_index=True)
-        
+
         self.pool_entries['TotalDiff'] = \
             self.pool_entries['PagedDiff'] + self.pool_entries['NonPagedDiff']
         return self.pool_entries
-    
+
     # ------------------------------------------------------------------------
 
     def get_df(self) -> pd.DataFrame:
@@ -176,7 +175,7 @@ class PoolEntries:
         """
         if not self.digest_called: self.digest()
         return self.pool_entries
-    
+
     # ------------------------------------------------------------------------
 
     def get_all_tags(self) -> list:
@@ -191,7 +190,7 @@ class PoolEntries:
         """
         if not self.digest_called: self.digest()
         return [t for t in self.pool_entries['Tag'].unique()]
-    
+
     # ------------------------------------------------------------------------
 
     def get_highest_tags(\
@@ -228,7 +227,7 @@ class PoolEntries:
                                 .sort_values([by_col], ascending=False)\
                                 .head(n_tags)
         return [row.name for _ , row in top_users.iterrows()]
-    
+
     # ------------------------------------------------------------------------
 
     def get_most_changed_tags(\
@@ -256,28 +255,28 @@ class PoolEntries:
         List(str)
             List of tags that have the highest usage.
         """
-        
+
         def get_change(x):
             (first, last) = tuple(x.to_numpy()[[0,-1]])
             return last - first
-        
+
         if ignore_tags is None or not isinstance(ignore_tags, list):
             ignore_tags = []
         ignore_tags.append('TOTAL')
         reduced_df = \
             self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
         reduced_df = reduced_df[['Tag', by_col]]
-        
+
         g = reduced_df[['Tag', by_col]]\
                 .groupby(['Tag'])\
                 .agg(get_change)\
                 .sort_values([by_col], ascending=False)\
                 .head(n_tags)
-                
+
         return [row.name for _ , row in g.iterrows()]
-    
+
     # ------------------------------------------------------------------------
-    
+
     def show_plot(\
             self,\
             tags: list,\
@@ -314,19 +313,19 @@ class PoolEntries:
         """
         if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
             raise Exception('Invalid timestamp tag')
-        
+
         valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
                       'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
         if by_col not in valid_cols:
             raise Exception('Invalid column name')
-            
+
         if None is not rcparams: plt.rcParams.update(rcparams)
-        
+
         title = by_col
         reduced_df = self.pool_entries[self.pool_entries['Tag'].isin(tags)]
         reduced_df = reduced_df[['Tag', by_col, 'DateTimeUTC']]
         xformatter = FormatStrFormatter('%d')
-        
+
         if by_col.endswith('Bytes'):
             reduced_df = reduced_df.copy()
             reduced_df[[by_col]] = reduced_df[[by_col]].divide(1024 * 1024)
@@ -334,7 +333,7 @@ class PoolEntries:
             xformatter = FormatStrFormatter('%.3f')
         else:
             title = f"{by_col} (n_allocs)"
-            
+
         print("just about to plot")
         ax = reduced_df.pivot(\
                         index='DateTimeUTC',\
@@ -343,13 +342,13 @@ class PoolEntries:
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         ax.yaxis.set_major_formatter(xformatter)
         ax.set_title(title)
-        
+
         colorScheme = 'seaborn'
         plt.style.use([colorScheme])
         plt.style.context(colorScheme)
-        
+
         plt.show()
-        
+
     # -----------------------------------------------------------------------
     def do_plot(\
             self,\
@@ -401,17 +400,17 @@ class PoolEntries:
 
         if timestamp_tag not in ['DateTime', 'DateTimeUTC']:
             raise Exception('Invalid timestamp tag')
-            
+
         valid_cols = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
                       'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
         if by_col not in valid_cols:
             raise Exception('Invalid column name')
-            
+
         if None is include_tags or not isinstance(include_tags, list):
             include_tags = []
-            
+
         if not self.digest_called: self.digest()
-        
+
         most_changed_tags = []
         if n_most_changed > 0:
             most_changed_tags = self.get_most_changed_tags(\
@@ -424,7 +423,7 @@ class PoolEntries:
                                             n_tags=n_highest,\
                                             by_col=by_col,\
                                             ignore_tags=ignore_tags)
-                
+
         all_tags = ['TOTAL']
         for t in include_tags:
             if t not in all_tags:
@@ -435,17 +434,17 @@ class PoolEntries:
         for t in highest_tags:
             if t not in all_tags:
                 all_tags.append(t)
-        
+
         self.show_plot(\
                 tags=all_tags,\
                 timestamp_tag=timestamp_tag,\
                 by_col=by_col, rcparams=rcparams)
-            
+
     # -----------------------------------------------------------------------
-    
+
 # ---------------------------------------------------------------------------
-        
-        
+
+
 def read_directory(dirname:str) -> PoolEntries:
     """
     Reads a directory and returns all the items in a PoolEntry structure
@@ -460,7 +459,7 @@ def read_directory(dirname:str) -> PoolEntries:
     PoolEntries
         The entries from all the CSV files in the directory.
 
-    """    
+    """
     pe = PoolEntries()
     for fname in glob.glob(f"{dirname}/*pool.csv"):
         pe.add_csv_file(fname)
