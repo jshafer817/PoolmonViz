@@ -65,4 +65,15 @@ Example:
 python analyze.py -d . -t TotalUsedBytes -et MmSt -it mfel FxL2 -nmc 2 -nh 2
 ```
 
+## Setup
 
+This tool requires python in addition to powershell. Anaconda is the recommended distribution of python.
+
+Additionally, the visualizer requires the following python packages:
+* Numpy
+* Pandas
+* Matplotlib
+* Seaborn
+
+The steps to install Anaconda can be found on the [Anaconda Site](https://docs.anaconda.com/anaconda/install/).
+Individual python packages can be installed using the steps mentioned [here](https://docs.anaconda.com/anaconda/navigator/tutorials/pandas/). Please use these steps to install numpy, pandas, matplotlib and seaborn.
