@@ -608,14 +608,14 @@ def main():
                         "--n-highest-usage-tags",\
                         type=int,\
                         default=5,\
-                        help="# of tags that have the highest peak usage",\
+                        help="No of tags that have the highest peak usage",\
                         required=False)
     parser.add_argument(\
                         "-nha",\
                         "--n-highest-average-usage-tags",\
                         type=int,\
                         default=5,\
-                        help="# of tags that have the highest average usage",\
+                        help="No of tags that have the highest average usage",\
                         required=False)
     args = parser.parse_args()
     args.include_tags = [] if None is args.include_tags else args.include_tags
