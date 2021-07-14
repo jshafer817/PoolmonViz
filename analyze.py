@@ -28,7 +28,7 @@ class PoolEntries:
 
     # ------------------------------------------------------------------------
 
-    def GetEncoding(self, filename:str) -> str:
+    def get_encoding(self, filename:str) -> str:
         """
         Try to guess the encoding of a file
 
@@ -78,7 +78,7 @@ class PoolEntries:
         """
         df = pd.read_csv(\
             csv_file,\
-            encoding=self.GetEncoding(csv_file),\
+            encoding=self.get_encoding(csv_file),\
             parse_dates=True,\
             date_parser=dateutil.parser.parser)
         df['DateTime'] = pd.to_datetime(\
@@ -267,6 +267,7 @@ class PoolEntries:
         if ignore_tags is None or not isinstance(ignore_tags, list):
             ignore_tags = []
         ignore_tags.append('TOTAL')
+        
         reduced_df = \
             self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
         reduced_df = reduced_df[['Tag', by_col]]
@@ -280,7 +281,50 @@ class PoolEntries:
         return [row.name for _ , row in g.iterrows()]
 
     # ------------------------------------------------------------------------
+    
+    def get_tags_with_highest_average_usage(\
+            self,\
+            n_tags:int,\
+            by_col:str="TotalUsedBytes",\
+            ignore_tags:list=[]) -> list:
+        """
+        Get N tags with the highest average usage across the timeframe.
 
+        Parameters
+        ----------
+        n_tags : int
+            Number of tags to consider.
+        by_col : str, optional
+            Which column to calculate the highest usage by.
+            The default is "TotalUsedBytes".. The default is "TotalUsedBytes".
+        ignore_tags : list, optional
+            These columns will not be considered for efficiency.
+            The default is [].
+
+        Returns
+        -------
+        List(str)
+            List of tags that have the highest average usage.
+
+        """
+        
+        if ignore_tags is None or not isinstance(ignore_tags, list):
+            ignore_tags = []
+        ignore_tags.append('TOTAL')
+        
+        reduced_df = \
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
+        reduced_df = reduced_df[['Tag', by_col]]
+
+        g = reduced_df[['Tag', by_col]]\
+                .groupby(['Tag'])\
+                .mean()\
+                .sort_values([by_col], ascending=False)\
+                .head(n_tags)
+
+        return [row.name for _ , row in g.iterrows()]
+    
+    # ------------------------------------------------------------------------
     def show_plot(\
             self,\
             tags: list,\
@@ -360,7 +404,8 @@ class PoolEntries:
             include_tags:list=None,\
             rcparams:dict=None,\
             n_most_changed:int=5,\
-            n_highest:int=5) -> None:
+            n_highest:int=5,\
+            n_highest_average:int=5) -> None:
         """
         Plot a column
 
@@ -387,6 +432,9 @@ class PoolEntries:
             Number of tags that show highest increase. The default is 5.
         n_highest : int, optional
             Number of tags that have highest peak usage. The default is 5.
+        n_highest_average : int, optional
+            Number of tags that have the highest average usage.
+            The default is 5.
 
         Raises
         ------
@@ -423,6 +471,13 @@ class PoolEntries:
                                             n_tags=n_highest,\
                                             by_col=by_col,\
                                             ignore_tags=ignore_tags)
+                
+        highest_average_tags = []
+        if n_highest_average > 0:
+            highest_average_tags = self.get_tags_with_highest_average_usage(\
+                                            n_tags=n_highest_average,\
+                                            by_col=by_col,\
+                                            ignore_tags=ignore_tags)
 
         all_tags = ['TOTAL']
         for t in include_tags:
@@ -432,6 +487,9 @@ class PoolEntries:
             if t not in all_tags:
                 all_tags.append(t)
         for t in highest_tags:
+            if t not in all_tags:
+                all_tags.append(t)
+        for t in highest_average_tags:
             if t not in all_tags:
                 all_tags.append(t)
 
@@ -451,7 +509,10 @@ def plot_files_in_directory(\
         by_col:str=PoolEntries.VALID_COLUMNS[0],\
         time_col:str=PoolEntries.VALID_TIME_COLUMNS[0],\
         include_tags:list=[],\
-        exclude_tags:list=[]) -> None:
+        exclude_tags:list=[],\
+        n_most_changed:int=5,\
+        n_highest_usage:int=5,\
+        n_highest_average_usage:int=5) -> None:
     """
     Read all files in a directory and plot the results
 
@@ -467,6 +528,15 @@ def plot_files_in_directory(\
         Must include these tags. The default is [].
     exclude_tags : list, optional
         Don't include these tags. The default is [].
+    n_most_changed : int
+        The number of tags to plot which have shown the most increase.
+        The default is 5.
+    n_highest_usage : int
+        The number of tags to plot which have the highest peak usage.
+        The default is 5.
+    n_highest_average_usage : int
+        The number of tags to plot which have the highest average usage.
+        The default is 5.
 
     Returns
     -------
@@ -477,7 +547,17 @@ def plot_files_in_directory(\
     pe = PoolEntries()
     for fname in glob.glob(f"{dirname}/*pool.csv"):
         pe.add_csv_file(fname)
-    pe.do_plot(by_col='TotalDiff')
+    pe.digest()
+    pe.do_plot(\
+        by_col=by_col,\
+        timestamp_tag=time_col,\
+        ignore_tags=exclude_tags,\
+        include_tags=include_tags,\
+        n_most_changed=n_most_changed,\
+        n_highest=n_highest_usage,\
+        n_highest_average=n_highest_average_usage,\
+        )
+
 
 def main():
     parser = argparse.ArgumentParser("Analyze Poolmon")
@@ -500,14 +580,56 @@ def main():
                         type=str,\
                         choices=PoolEntries.VALID_TIME_COLUMNS,\
                         help="Which timestamp to use",\
-                        default=PoolEntries.VALID_TIME_COLUMNS[0])
+                        default=PoolEntries.VALID_TIME_COLUMNS[0],\
+                        required=False)
+    parser.add_argument(\
+                        "-it",\
+                        "--include-tags",\
+                        type=str,\
+                        nargs='+',\
+                        help="List of tags that must be included",\
+                        required=False)
+    parser.add_argument(\
+                        "-et",\
+                        "--exclude-tags",\
+                        type=str,\
+                        nargs='+',\
+                        help="List of tags that must be excluded",\
+                        required=False)
+    parser.add_argument(\
+                        "-nmc",\
+                        "--n-most-changed-tags",
+                        type=int,
+                        default=5,\
+                        help="Number of tags that show highest growth",\
+                        required=False)
+    parser.add_argument(\
+                        "-nh",\
+                        "--n-highest-usage-tags",\
+                        type=int,\
+                        default=5,\
+                        help="# of tags that have the highest peak usage",\
+                        required=False)
+    parser.add_argument(\
+                        "-nha",\
+                        "--n-highest-average-usage-tags",\
+                        type=int,\
+                        default=5,\
+                        help="# of tags that have the highest average usage",\
+                        required=False)
     args = parser.parse_args()
+    args.include_tags = [] if None is args.include_tags else args.include_tags
+    args.exclude_tags = [] if None is args.exclude_tags else args.exclude_tags
     plot_files_in_directory(\
-                            dirname=args.directory,\
-                            by_col=args.type,\
-                            time_col=args.time_stamp,\
-                            include_tags=[],\
-                            exclude_tags=[])
+                dirname=args.directory,\
+                by_col=args.type,\
+                time_col=args.time_stamp,\
+                include_tags=args.include_tags,\
+                exclude_tags=args.exclude_tags,\
+                n_most_changed=args.n_most_changed_tags,\
+                n_highest_usage=args.n_highest_usage_tags,\
+                n_highest_average_usage=args.n_highest_average_usage_tags,\
+                )
 
 
 if "__main__" == __name__:
