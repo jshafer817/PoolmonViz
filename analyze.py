@@ -261,8 +261,9 @@ class PoolEntries:
         """
 
         def get_change(x):
+            # This reports the percentage change in the tag
             (first, last) = tuple(x.to_numpy()[[0,-1]])
-            return last - first
+            return ((last - first)  * 100) / float(first)
 
         if ignore_tags is None or not isinstance(ignore_tags, list):
             ignore_tags = []
@@ -380,7 +381,6 @@ class PoolEntries:
         else:
             title = f"{by_col} (n_allocs)"
 
-        print("just about to plot")
         ax = reduced_df.pivot(\
                         index='DateTimeUTC',\
                         values=by_col,\
