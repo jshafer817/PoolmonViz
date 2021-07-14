@@ -1,7 +1,19 @@
 # PoolmonViz
 A visualizer for poolmon tags plotted over time
 
-## Usage
+## Overview
+In the Windows kernel, the heap memory allocation routines take an optional *tag* that can be used to debug memory leaks. Various tools like poolmon and windbg can display statistics that indicate the total amount of memory used by each tag, which can then be used to narrow down the problem.
+
+However, the statistics reported by these tools are snapshots in time, and do not provide any indication as to which tags are growing and which are not. Kernel developers will often take multiple snapshots over time and compare them manually. This, obviously is a tedious process.
+
+Things become even more challenging when the memory leak is small and accumulates over months. Such memory leaks rarely show up as top users and are easily missed.
+
+
+![Screenshot](images/Screenshot_1.PNG)
+
+## Usage of Analyzer
+Please invoke the python script as follows:
+
 ```
 usage: Analyze Poolmon [-h] -d DIRECTORY -t
                        {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes}
@@ -29,4 +41,4 @@ optional arguments:
                         No of tags that have the highest average usage
 ```
 
-![Screenshot](images/Screenshot_1.PNG)
+
