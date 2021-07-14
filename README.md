@@ -8,6 +8,19 @@ However, the statistics reported by these tools are snapshots in time, and do no
 
 Things become even more challenging when the memory leak is small and accumulates over months. Such memory leaks rarely show up as top users and are easily missed.
 
+PoolmonViz consists of two parts
+* poolmon-powershell.ps1
+* visualize.py
+
+poolmon-powershell.ps1 periodically collects snapshots of memory usage and stores them as a set of CSV files in the directory from which it is launched. The periodicity and duration of collection can be controlled by modifying the last line of the script.
+
+Once poolmon-powershell.ps1 has collected all the different CSV files, visualize.py can then be invoked to create a plot of the memory usage of each tag over time. By default, the following tags are plotted
+* 5 top tags that have the highest peak usage
+* 5 top tags that have the highest average usage
+* 5 top tags that show the biggest percentage increase
+
+visualize.py has several options that allow it to plot either the total size per tag, or the number of allocations per tag, and is controlled by the -t/--type command line option.
+
 
 ![Screenshot](images/Screenshot_1.PNG)
 
@@ -15,7 +28,7 @@ Things become even more challenging when the memory leak is small and accumulate
 Please invoke the python script as follows:
 
 ```
-usage: Analyze Poolmon [-h] -d DIRECTORY -t
+usage: visualize.py [-h] -d DIRECTORY -t
                        {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes}
                        [-ts {DateTime,DateTimeUTC}] [-it INCLUDE_TAGS [INCLUDE_TAGS ...]]
                        [-et EXCLUDE_TAGS [EXCLUDE_TAGS ...]] [-nmc N_MOST_CHANGED_TAGS] [-nh N_HIGHEST_USAGE_TAGS]
