@@ -560,7 +560,7 @@ def plot_files_in_directory(\
 
 
 def main():
-    parser = argparse.ArgumentParser("Analyze Poolmon")
+    parser = argparse.ArgumentParser("visualize.py")
     parser.add_argument(\
                         "-d",\
                         "--directory",\
