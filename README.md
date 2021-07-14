@@ -41,4 +41,9 @@ optional arguments:
                         No of tags that have the highest average usage
 ```
 
+Example:
+```
+python analyze.py -d . -t TotalUsedBytes -et MmSt -it mfel FxL2 -nmc 2 -nh 2
+```
+
 
