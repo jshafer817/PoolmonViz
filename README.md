@@ -21,8 +21,14 @@ Once poolmon-powershell.ps1 has collected all the different CSV files, visualize
 
 visualize.py has several options that allow it to plot either the total size per tag, or the number of allocations per tag, and is controlled by the -t/--type command line option.
 
+The plot can be further drilled down into by clicking the *loupe* icon and then selecting a part of a graph to magnify. This can be very helpful when multiple tags seem to overlap.
+
+Another tool that is available on Windows is the *Figure options* which can be accessed by the icon next to the *save* icon. This allows changing the marker-type, line-style and color for each tag. This is very useful when several tags mirror each other in allocation patterns.
 
 ![Screenshot](images/Screenshot_1.PNG)
+
+![Screenshot](images/figure-options-1.png) ![Screenshot](images/figure-options-2.png) ![Screenshot](images/layout.png)
+
 
 ## Usage of Analyzer
 Please invoke the python script as follows:
