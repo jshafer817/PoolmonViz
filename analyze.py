@@ -396,7 +396,7 @@ class PoolEntries:
         Returns
         -------
         None
-            DESCRIPTION.
+            Does not return anything.
 
         """
 
@@ -446,19 +446,32 @@ class PoolEntries:
 # ---------------------------------------------------------------------------
 
 
-def read_directory(dirname:str) -> PoolEntries:
+def plot_files_in_directory(\
+        dirname:str=".",\
+        by_col:str=PoolEntries.VALID_COLUMNS[0],\
+        time_col:str=PoolEntries.VALID_TIME_COLUMNS[0],\
+        include_tags:list=[],\
+        exclude_tags:list=[]) -> None:
     """
-    Reads a directory and returns all the items in a PoolEntry structure
+    Read all files in a directory and plot the results
 
     Parameters
     ----------
-    dirname : str
-        Name of the directory.
+    dirname : str, optional
+        Directory where all the csv files are. The default is ".".
+    by_col : str, optional
+        The column to sort by. The default is PoolEntries.VALID_COLUMNS[0].
+    time_col : str, optional
+        Localtime or UTC. The default is PoolEntries.VALID_TIME_COLUMNS[0].
+    include_tags : list, optional
+        Must include these tags. The default is [].
+    exclude_tags : list, optional
+        Don't include these tags. The default is [].
 
     Returns
     -------
-    PoolEntries
-        The entries from all the CSV files in the directory.
+    None
+        Does not return anything.
 
     """
     pe = PoolEntries()
@@ -467,16 +480,34 @@ def read_directory(dirname:str) -> PoolEntries:
     pe.do_plot(by_col='TotalDiff')
 
 def main():
-    """
     parser = argparse.ArgumentParser("Analyze Poolmon")
     parser.add_argument(\
                         "-d",\
                         "--directory",\
+                        type=str,\
                         help="The directory where the CSV files reside",\
                         required=True)
+    parser.add_argument(\
+                        "-t",\
+                        "--type",\
+                        type=str,\
+                        choices=PoolEntries.VALID_COLUMNS,\
+                        help="Type of plot, valid values",\
+                        required=True)
+    parser.add_argument(\
+                        "-ts",\
+                        "--time-stamp",\
+                        type=str,\
+                        choices=PoolEntries.VALID_TIME_COLUMNS,\
+                        help="Which timestamp to use",\
+                        default=PoolEntries.VALID_TIME_COLUMNS[0])
     args = parser.parse_args()
-    """
-    read_directory(".")
+    plot_files_in_directory(\
+                            dirname=args.directory,\
+                            by_col=args.type,\
+                            time_col=args.time_stamp,\
+                            include_tags=[],\
+                            exclude_tags=[])
 
 
 if "__main__" == __name__:
