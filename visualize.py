@@ -477,6 +477,7 @@ class PoolEntries:
         if not self.digest_called: self.digest()
 
         all_tags = ['TOTAL']
+        
         def select_tags(\
                     fn,\
                     n_tags:int,\
