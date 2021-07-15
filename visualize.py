@@ -478,9 +478,9 @@ class PoolEntries:
 
         all_tags = ['TOTAL']
         def select_tags(\
-                                fn,\
-                                n_tags:int,\
-                                description:str):
+                    fn,\
+                    n_tags:int,\
+                    description:str):
             if n_tags > 0:
                 taglist = fn(\
                             by_col=by_col,\
