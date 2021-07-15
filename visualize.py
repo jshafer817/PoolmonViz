@@ -412,8 +412,6 @@ class PoolEntries:
         plt.style.use([colorScheme])
         plt.style.context(colorScheme)
 
-        plt.show()
-
     # -----------------------------------------------------------------------
     def do_plot(\
             self,\
@@ -478,45 +476,42 @@ class PoolEntries:
 
         if not self.digest_called: self.digest()
 
-        most_changed_tags = []
-        if n_most_changed > 0:
-            most_changed_tags = self.get_most_changed_tags(\
-                                            n_tags=n_most_changed,\
-                                            by_col=by_col,\
-                                            ignore_tags=ignore_tags)
-        highest_tags = []
-        if n_highest > 0:
-            highest_tags = self.get_highest_tags(\
-                                            n_tags=n_highest,\
-                                            by_col=by_col,\
-                                            ignore_tags=ignore_tags)
-                
-        highest_average_tags = []
-        if n_highest_average > 0:
-            highest_average_tags = self.get_tags_with_highest_average_usage(\
-                                            n_tags=n_highest_average,\
-                                            by_col=by_col,\
-                                            ignore_tags=ignore_tags)
-
         all_tags = ['TOTAL']
-        for t in include_tags:
-            if t not in all_tags:
-                all_tags.append(t)
-        for t in most_changed_tags:
-            if t not in all_tags:
-                all_tags.append(t)
-        for t in highest_tags:
-            if t not in all_tags:
-                all_tags.append(t)
-        for t in highest_average_tags:
-            if t not in all_tags:
-                all_tags.append(t)
+        def select_tags(\
+                                fn,\
+                                n_tags:int,\
+                                description:str):
+            if n_tags > 0:
+                taglist = fn(\
+                            by_col=by_col,\
+                            n_tags=n_tags,\
+                            ignore_tags=ignore_tags)
+                for t in taglist:
+                    if t not in all_tags:
+                        all_tags.append(t)
+                print(f"tags with {description:25s}: {taglist}")
+            
+        
+        select_tags(\
+                    fn=self.get_most_changed_tags,
+                    n_tags=n_most_changed,
+                    description="GREATEST INCREASE")
+        select_tags(\
+                    fn=self.get_highest_tags,
+                    n_tags=n_highest,
+                    description="HIGHEST PEAK USAGE")    
+        select_tags(\
+                    fn=self.get_tags_with_highest_average_usage,
+                    n_tags=n_highest_average,
+                    description="HIGHEST AVERAGE USAGE")
+        
 
         self.show_plot(\
                 tags=all_tags,\
                 timestamp_tag=timestamp_tag,\
                 by_col=by_col,\
                 rcparams=rcparams)
+        plt.show()
 
     # -----------------------------------------------------------------------
 
