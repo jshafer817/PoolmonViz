@@ -1,7 +1,7 @@
 # PoolmonViz
 A visualizer for poolmon tags plotted over time
 
-Table of Contents
+#### Table of Contents
 - [Overview](#overview)
 - [Usage of Analyzer](#usage-of-analyzer)
 - [Screenshots](#screenshots)
