@@ -1,6 +1,11 @@
 # PoolmonViz
 A visualizer for poolmon tags plotted over time
 
+Table of Contents
+- [Overview](#overview)
+- [Usage of Analyzer](#usage-of-analyzer)
+- [Setup](#setup)
+
 ## Overview
 In the Windows kernel, the heap memory allocation routines take an optional *tag* that can be used to debug memory leaks. Various tools like poolmon and windbg can display statistics that indicate the total amount of memory used by each tag, which can then be used to narrow down the problem.
 
