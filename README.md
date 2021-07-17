@@ -4,6 +4,7 @@ A visualizer for poolmon tags plotted over time
 Table of Contents
 - [Overview](#overview)
 - [Usage of Analyzer](#usage-of-analyzer)
+- [Screenshots](#screenshots)
 - [Setup](#setup)
 
 ## Overview
@@ -30,6 +31,7 @@ The plot can be further drilled down into by clicking the *loupe* icon and then 
 
 Another tool that is available on Windows is the *Figure options* which can be accessed by the icon next to the *save* icon. This allows changing the marker-type, line-style and color for each tag. This is very useful when several tags mirror each other in allocation patterns.
 
+## Screenshots
 ![Screenshot](images/Screenshot_1.PNG)
 
 ![Screenshot](images/figure-options-1.png) ![Screenshot](images/figure-options-2.png) ![Screenshot](images/layout.png)
