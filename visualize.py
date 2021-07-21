@@ -281,8 +281,13 @@ class PoolEntries:
 
         def get_change(x):
             # This reports the percentage change in the tag
-            (first, last) = tuple(x.to_numpy()[[0,-1]])
-            return ((last - first)  * 100) / (last + 0.001)
+            x = x.to_numpy()
+            x = x[x != 0]
+            try:
+                (first, last) = tuple(x[[0,-1]])
+                return ((last - first)  * 100) / (last + 0.001)
+            except:
+                return 0.0
 
         if ignore_tags is None or not isinstance(ignore_tags, list):
             ignore_tags = []
