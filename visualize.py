@@ -409,6 +409,8 @@ class PoolEntries:
             tags: list,\
             timestamp_tag:str='DateTimeUTC',
             by_col:str='TotalUsedBytes',
+            show_correlation:bool=False,
+            show_correlation_extended:bool=False,
             rcparams:dict=None) -> None:
         """
         Plot a set of tags and display
@@ -429,6 +431,12 @@ class PoolEntries:
                 PagedUsedBytes,
                 NonPagedUsedBytes,
                 TotalUsedBytes
+        show_correlation : bool, optional
+            If true show the correlation between the selected tags.
+            The default is false.
+        show_correlation_extended : bool, optional
+            If true show the correlation between the all tags.
+            The default is false.
         rcparams : dict, optional
             rcParams for matplotlib. The default is None.
 
@@ -472,6 +480,25 @@ class PoolEntries:
         plt.style.use([colorScheme])
         plt.style.context(colorScheme)
 
+        if show_correlation:
+            fig = plt.figure("Correlation Between Tags")
+            corr = reduced_df.pivot(\
+                            index='DateTimeUTC',\
+                            values=by_col,\
+                            columns='Tag').corr()
+            annot = False if corr.shape[0] > 30 else True
+            sns.heatmap(corr,
+                        cmap='Blues',\
+                        annot=annot)
+
+        if show_correlation_extended:
+            fig = plt.figure("Correlation Between Tags")
+            sns.heatmap(self.pool_entries.pivot(\
+                            index='DateTimeUTC',\
+                            values=by_col,\
+                            columns='Tag').corr(),\
+                        cmap='Blues')
+
     # -----------------------------------------------------------------------
     def do_plot(\
             self,\
@@ -483,7 +510,9 @@ class PoolEntries:
             n_most_changed:int=5,\
             n_most_changed_abs:int=5,\
             n_highest:int=5,\
-            n_highest_average:int=5) -> None:
+            n_highest_average:int=5,\
+            show_correlation:bool=False,\
+            show_correlation_extended:bool=False) -> None:
         """
         Plot a column
 
@@ -517,6 +546,12 @@ class PoolEntries:
         n_highest_average : int, optional
             Number of tags that have the highest average usage.
             The default is 5.
+        show_correlation : bool, optional
+            If true show the correlation between the selected tags.
+            The default is false.
+        show_correlation_extended : bool, optional
+            If true show the correlation between the all tags.
+            The default is false.
 
         Raises
         ------
@@ -580,7 +615,9 @@ class PoolEntries:
                 tags=all_tags,\
                 timestamp_tag=timestamp_tag,\
                 by_col=by_col,\
-                rcparams=rcparams)
+                rcparams=rcparams,\
+                show_correlation=show_correlation,\
+                show_correlation_extended=show_correlation_extended)
         plt.show()
 
     # -----------------------------------------------------------------------
@@ -597,7 +634,9 @@ def plot_files_in_directory(\
         n_most_changed:int=5,\
         n_most_changed_abs:int=5,\
         n_highest_usage:int=5,\
-        n_highest_average_usage:int=5) -> None:
+        n_highest_average_usage:int=5,\
+        show_correlation:bool=False,\
+        show_correlation_extended:bool=False) -> None:
     """
     Read all files in a directory and plot the results
 
@@ -625,6 +664,12 @@ def plot_files_in_directory(\
     n_highest_average_usage : int
         The number of tags to plot which have the highest average usage.
         The default is 5.
+    show_correlation : bool, optional
+        If true show the correlation between the selected tags.
+        The default is false.
+    show_correlation_extended : bool, optional
+        If true show the correlation between the all tags.
+        The default is false.
 
     Returns
     -------
@@ -645,6 +690,8 @@ def plot_files_in_directory(\
         n_most_changed_abs=n_most_changed_abs,\
         n_highest=n_highest_usage,\
         n_highest_average=n_highest_average_usage,\
+        show_correlation=show_correlation,\
+        show_correlation_extended=show_correlation_extended,\
         )
 
 
@@ -714,6 +761,21 @@ def main():
                         default=5,\
                         help="No of tags that have the highest average usage",\
                         required=False)
+    parser.add_argument(\
+                        "-sc",\
+                        "--show-correlation",\
+                        default=False,\
+                        action="store_true",\
+                        help="Show correlation between selected tags",\
+                        required=False)
+    parser.add_argument(\
+                        "-sce",\
+                        "--show-correlation-extended",\
+                        default=False,\
+                        action="store_true",\
+                        help="Show correlation between all tags",\
+                        required=False)
+
     args = parser.parse_args()
     args.include_tags = [] if None is args.include_tags else args.include_tags
     args.exclude_tags = [] if None is args.exclude_tags else args.exclude_tags
@@ -727,6 +789,8 @@ def main():
                 n_most_changed_abs=args.n_most_changed_tags_absolute,\
                 n_highest_usage=args.n_highest_usage_tags,\
                 n_highest_average_usage=args.n_highest_average_usage_tags,\
+                show_correlation=args.show_correlation,\
+                show_correlation_extended=args.show_correlation_extended,\
                 )
 
 
