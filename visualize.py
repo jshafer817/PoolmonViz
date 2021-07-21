@@ -38,7 +38,7 @@ import seaborn as sns
 class PoolEntries:
     VALID_COLUMNS = ['TotalUsedBytes', 'PagedDiff', 'NonPagedDiff',\
               'TotalDiff', 'PagedUsedBytes', 'NonPagedUsedBytes']
-    VALID_TIME_COLUMNS = ['DateTime', 'DateTimeUTC']
+    VALID_TIME_COLUMNS = ['DateTimeUTC', 'DateTime']
         
     def __init__(self):
         self.individual_data_frames = list()
@@ -456,7 +456,7 @@ class PoolEntries:
 
         title = by_col
         reduced_df = self.pool_entries[self.pool_entries['Tag'].isin(tags)]
-        reduced_df = reduced_df[['Tag', by_col, 'DateTimeUTC']]
+        reduced_df = reduced_df[['Tag', by_col, timestamp_tag]]
         yformatter = FormatStrFormatter('%d')
 
         if by_col.endswith('Bytes'):
@@ -467,9 +467,10 @@ class PoolEntries:
         else:
             title = f"{by_col} (n_allocs)"
 
-        marker = '.' if reduced_df.shape[0] < 50 else None
+        n_readings = reduced_df[timestamp_tag].unique().shape[0]
+        marker = '.' if n_readings < 50 else None
         ax = reduced_df.pivot(\
-                        index='DateTimeUTC',\
+                        index=timestamp_tag,\
                         values=by_col,\
                         columns='Tag').plot(marker=marker)
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
@@ -481,9 +482,10 @@ class PoolEntries:
         plt.style.context(colorScheme)
 
         if show_correlation:
-            fig = plt.figure("Correlation Between Tags")
+            fig = plt.figure(f"Correlation Between Selected Tags: {title}")
+            fig.suptitle(f"Correlation Between Selected Tags: {title}")
             corr = reduced_df.pivot(\
-                            index='DateTimeUTC',\
+                            index=timestamp_tag,\
                             values=by_col,\
                             columns='Tag').corr()
             annot = False if corr.shape[0] > 30 else True
@@ -492,9 +494,10 @@ class PoolEntries:
                         annot=annot)
 
         if show_correlation_extended:
-            fig = plt.figure("Correlation Between Tags")
+            fig = plt.figure(f"Correlation Between All Tags: {title}")
+            fig.suptitle(f"Correlation Between All Tags: {title}")
             sns.heatmap(self.pool_entries.pivot(\
-                            index='DateTimeUTC',\
+                            index=timestamp_tag,\
                             values=by_col,\
                             columns='Tag').corr(),\
                         cmap='Blues')
