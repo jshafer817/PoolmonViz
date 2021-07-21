@@ -261,7 +261,7 @@ class PoolEntries:
         """
         Get the list of tags that see the highest change
         Highest change here is the difference between the first and the
-        last entry
+        last entry as a percentage
 
         Parameters
         ----------
@@ -286,6 +286,60 @@ class PoolEntries:
             try:
                 (first, last) = tuple(x[[0,-1]])
                 return ((last - first)  * 100) / (last + 0.001)
+            except:
+                return 0.0
+
+        if ignore_tags is None or not isinstance(ignore_tags, list):
+            ignore_tags = []
+        ignore_tags.append('TOTAL')
+        
+        reduced_df = \
+            self.pool_entries[~self.pool_entries['Tag'].isin(ignore_tags)]
+        reduced_df = reduced_df[['Tag', by_col]]
+
+        g = reduced_df[['Tag', by_col]]\
+                .groupby(['Tag'])\
+                .agg(get_change)\
+                .sort_values([by_col], ascending=False)\
+                .head(n_tags)
+
+        return [row.name for _ , row in g.iterrows()]
+
+    # ------------------------------------------------------------------------
+    
+    def get_most_changed_tags_abs(\
+            self,\
+            n_tags:int,\
+            by_col:str="TotalUsedBytes",\
+            ignore_tags:list=[]) -> list:
+        """
+        Get the list of tags that see the highest change
+        Highest change here is the difference between the first and the
+        last entry
+
+        Parameters
+        ----------
+        n_tags : int
+            Number of highest tags to get.
+        by_col : str, optional
+            Which column to calculate the highest usage by.
+            The default is "TotalUsedBytes".
+        ignore_tags : list, optional
+            These columns will not be considered for efficiency.
+            The default is [].
+        Returns
+        -------
+        List(str)
+            List of tags that have the highest usage.
+        """
+
+        def get_change(x):
+            # This reports the percentage change in the tag
+            x = x.to_numpy()
+            x = x[x != 0]
+            try:
+                (first, last) = tuple(x[[0,-1]])
+                return last - first
             except:
                 return 0.0
 
@@ -426,6 +480,7 @@ class PoolEntries:
             include_tags:list=None,\
             rcparams:dict=None,\
             n_most_changed:int=5,\
+            n_most_changed_abs:int=5,\
             n_highest:int=5,\
             n_highest_average:int=5) -> None:
         """
@@ -451,7 +506,11 @@ class PoolEntries:
         rcparams : dict, optional
             rcParams for matplotlib configuration. The default is None.
         n_most_changed : int, optional
-            Number of tags that show highest increase. The default is 5.
+            Number of tags that show highest increase as a percentage.
+            The default is 5.
+        n_most_changed_abs : int, optional
+            Number of tags that show highest increase in absolute terms.
+            The default is 5.
         n_highest : int, optional
             Number of tags that have highest peak usage. The default is 5.
         n_highest_average : int, optional
@@ -503,6 +562,10 @@ class PoolEntries:
                     n_tags=n_most_changed,
                     description="GREATEST INCREASE")
         select_tags(\
+                    fn=self.get_most_changed_tags_abs,
+                    n_tags=n_most_changed,
+                    description="GREATEST INCREASE (ABS)")
+        select_tags(\
                     fn=self.get_highest_tags,
                     n_tags=n_highest,
                     description="HIGHEST PEAK USAGE")    
@@ -531,6 +594,7 @@ def plot_files_in_directory(\
         include_tags:list=[],\
         exclude_tags:list=[],\
         n_most_changed:int=5,\
+        n_most_changed_abs:int=5,\
         n_highest_usage:int=5,\
         n_highest_average_usage:int=5) -> None:
     """
@@ -551,6 +615,9 @@ def plot_files_in_directory(\
     n_most_changed : int
         The number of tags to plot which have shown the most increase.
         The default is 5.
+    n_most_changed : int
+        The number of tags to plot which have shown the most increase in
+        absolute terms. The default is 5.
     n_highest_usage : int
         The number of tags to plot which have the highest peak usage.
         The default is 5.
@@ -574,6 +641,7 @@ def plot_files_in_directory(\
         ignore_tags=exclude_tags,\
         include_tags=include_tags,\
         n_most_changed=n_most_changed,\
+        n_most_changed_abs=n_most_changed_abs,\
         n_highest=n_highest_usage,\
         n_highest_average=n_highest_average_usage,\
         )
@@ -624,6 +692,14 @@ def main():
                         help="Number of tags that show highest growth",\
                         required=False)
     parser.add_argument(\
+                        "-nmca",\
+                        "--n-most-changed-tags-absolute",
+                        type=int,
+                        default=5,\
+                        help="Number of tags that show highest growth " +
+                                "(absolute)",\
+                        required=False)
+    parser.add_argument(\
                         "-nh",\
                         "--n-highest-usage-tags",\
                         type=int,\
@@ -647,6 +723,7 @@ def main():
                 include_tags=args.include_tags,\
                 exclude_tags=args.exclude_tags,\
                 n_most_changed=args.n_most_changed_tags,\
+                n_most_changed_abs=args.n_most_changed_tags_absolute,\
                 n_highest_usage=args.n_highest_usage_tags,\
                 n_highest_average_usage=args.n_highest_average_usage_tags,\
                 )

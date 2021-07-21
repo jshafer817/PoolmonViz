@@ -24,6 +24,7 @@ Once *poolmon-powershell.ps1* has collected all the different CSV files, *visual
 * 5 top tags that have the highest peak usage
 * 5 top tags that have the highest average usage
 * 5 top tags that show the biggest percentage increase
+* 5 top tags that show the biggest absolute increase
 
 *visualize.py* has several options that allow it to plot either the total size per tag, or the number of allocations per tag, and is controlled by the *-t/--type* command line option.
 
