@@ -459,10 +459,11 @@ class PoolEntries:
         else:
             title = f"{by_col} (n_allocs)"
 
+        marker = '.' if reduced_df.shape[0] < 50 else None
         ax = reduced_df.pivot(\
                         index='DateTimeUTC',\
                         values=by_col,\
-                        columns='Tag').plot(marker='.')
+                        columns='Tag').plot(marker=marker)
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         ax.yaxis.set_major_formatter(yformatter)
         ax.set_title(title)
