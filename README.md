@@ -52,11 +52,8 @@ The correlation metric used here is Pearson Correlation Coefficient.
 Please invoke the python script as follows:
 
 ```
-usage: visualize.py [-h] -d DIRECTORY -t
-                       {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes}
-                       [-ts {DateTime,DateTimeUTC}] [-it INCLUDE_TAGS [INCLUDE_TAGS ...]]
-                       [-et EXCLUDE_TAGS [EXCLUDE_TAGS ...]] [-nmc N_MOST_CHANGED_TAGS] [-nh N_HIGHEST_USAGE_TAGS]
-                       [-nha N_HIGHEST_AVERAGE_USAGE_TAGS]
+usage: visualize.py [-h] -d DIRECTORY -t {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes} [-ts {DateTimeUTC,DateTime}] [-it INCLUDE_TAGS [INCLUDE_TAGS ...]] [-et EXCLUDE_TAGS [EXCLUDE_TAGS ...]]
+                    [-nmc N_MOST_CHANGED_TAGS] [-nmca N_MOST_CHANGED_TAGS_ABSOLUTE] [-nh N_HIGHEST_USAGE_TAGS] [-nha N_HIGHEST_AVERAGE_USAGE_TAGS] [-sc] [-sce]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -64,7 +61,7 @@ optional arguments:
                         The directory where the CSV files reside
   -t {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes}, --type {TotalUsedBytes,PagedDiff,NonPagedDiff,TotalDiff,PagedUsedBytes,NonPagedUsedBytes}
                         Type of plot, valid values
-  -ts {DateTime,DateTimeUTC}, --time-stamp {DateTime,DateTimeUTC}
+  -ts {DateTimeUTC,DateTime}, --time-stamp {DateTimeUTC,DateTime}
                         Which timestamp to use
   -it INCLUDE_TAGS [INCLUDE_TAGS ...], --include-tags INCLUDE_TAGS [INCLUDE_TAGS ...]
                         List of tags that must be included
@@ -72,6 +69,8 @@ optional arguments:
                         List of tags that must be excluded
   -nmc N_MOST_CHANGED_TAGS, --n-most-changed-tags N_MOST_CHANGED_TAGS
                         Number of tags that show highest growth
+  -nmca N_MOST_CHANGED_TAGS_ABSOLUTE, --n-most-changed-tags-absolute N_MOST_CHANGED_TAGS_ABSOLUTE
+                        Number of tags that show highest growth (absolute)
   -nh N_HIGHEST_USAGE_TAGS, --n-highest-usage-tags N_HIGHEST_USAGE_TAGS
                         No of tags that have the highest peak usage
   -nha N_HIGHEST_AVERAGE_USAGE_TAGS, --n-highest-average-usage-tags N_HIGHEST_AVERAGE_USAGE_TAGS
@@ -80,6 +79,7 @@ optional arguments:
                         Show correlation between selected tags
   -sce, --show-correlation-extended
                         Show correlation between all tags
+
 ```
 
 Example:
