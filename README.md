@@ -44,10 +44,9 @@ The correlation metric used here is Pearson Correlation Coefficient.
 ## Screenshots
 ![Screenshot](images/Screenshot_1.PNG)
 
-![Screenshot](images/figure-options-1.png) ![Screenshot](images/figure-options-2.png) ![Screenshot](images/layout.png)
-
 ![Screenshot of Correlation](images/pearson_correlation.PNG)
 
+![Screenshot](images/figure-options-1.png) ![Screenshot](images/figure-options-2.png) ![Screenshot](images/layout.png)
 
 ## Usage of Analyzer
 Please invoke the python script as follows:
