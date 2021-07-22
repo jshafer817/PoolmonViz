@@ -4,8 +4,8 @@ A visualizer for poolmon tags plotted over time
 #### Table of Contents
 - [Overview](#overview)
    - [Correlation Matrix](#correlation-matrix)
-- [Usage of Analyzer](#usage-of-analyzer)
 - [Screenshots](#screenshots)
+- [Usage of Analyzer](#usage-of-analyzer)
 - [Setup](#setup)
 
 
