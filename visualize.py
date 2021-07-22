@@ -599,19 +599,19 @@ class PoolEntries:
         select_tags(\
                     fn=self.get_most_changed_tags,
                     n_tags=n_most_changed,
-                    description="GREATEST INCREASE (%)")
+                    description="BIGGEST INCREASE (%)")
         select_tags(\
                     fn=self.get_most_changed_tags_abs,
                     n_tags=n_most_changed,
-                    description="GREATEST INCREASE (ABS)")
+                    description="BIGGEST INCREASE (ABS)")
         select_tags(\
                     fn=self.get_highest_tags,
                     n_tags=n_highest,
-                    description="HIGHEST USAGE (PEAK)")    
+                    description="HIGHEST USAGE    (PEAK)")    
         select_tags(\
                     fn=self.get_tags_with_highest_average_usage,
                     n_tags=n_highest_average,
-                    description="HIGHEST USAGE (MEAN)")
+                    description="HIGHEST USAGE    (MEAN)")
         
 
         self.show_plot(\
