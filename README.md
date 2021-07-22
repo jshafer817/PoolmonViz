@@ -100,3 +100,5 @@ Additionally, the visualizer requires the following python packages:
 
 The steps to install Anaconda can be found on the [Anaconda Site](https://docs.anaconda.com/anaconda/install/).
 Individual python packages can be installed using the steps mentioned [here](https://docs.anaconda.com/anaconda/navigator/tutorials/pandas/). Please use these steps to install numpy, pandas, matplotlib and seaborn.
+
+
