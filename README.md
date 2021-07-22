@@ -66,6 +66,10 @@ optional arguments:
                         No of tags that have the highest peak usage
   -nha N_HIGHEST_AVERAGE_USAGE_TAGS, --n-highest-average-usage-tags N_HIGHEST_AVERAGE_USAGE_TAGS
                         No of tags that have the highest average usage
+  -sc, --show-correlation
+                        Show correlation between selected tags
+  -sce, --show-correlation-extended
+                        Show correlation between all tags
 ```
 
 Example:
