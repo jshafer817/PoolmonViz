@@ -496,11 +496,22 @@ class PoolEntries:
         if show_correlation_extended:
             fig = plt.figure(f"Correlation Between All Tags: {title}")
             fig.suptitle(f"Correlation Between All Tags: {title}")
-            sns.heatmap(self.pool_entries.pivot(\
-                            index=timestamp_tag,\
-                            values=by_col,\
-                            columns='Tag').corr(),\
-                        cmap='Blues')
+            corr = self.pool_entries.pivot(\
+                        index=timestamp_tag,\
+                        values=by_col,\
+                        columns='Tag').corr()
+            sns.heatmap(corr, cmap='Blues')
+
+        if show_correlation or show_correlation_extended:
+            CORR_THRESH = 0.90
+            filtered_corr = corr['TOTAL']
+            filtered_corr = filtered_corr[filtered_corr > CORR_THRESH]
+            if len(filtered_corr) > 0:
+                print(f"Significant correlations with TOTAL, "\
+                        "threshold = {CORR_THRESH}")
+                print(filtered_corr)
+                fig = plt.figure(f"Tags significantly correlated with total")
+                filtered_corr.plot(kind='barh')
 
     # -----------------------------------------------------------------------
     def do_plot(\
