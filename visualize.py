@@ -507,10 +507,13 @@ class PoolEntries:
             filtered_corr = corr['TOTAL']
             filtered_corr = filtered_corr[filtered_corr > CORR_THRESH]
             if len(filtered_corr) > 0:
-                print(f"Significant correlations with TOTAL, "\
-                        "threshold = {CORR_THRESH}")
+                print(f"\nSignificant correlations with TOTAL, " +\
+                        f"threshold = {CORR_THRESH}")
                 print(filtered_corr)
-                fig = plt.figure(f"Tags significantly correlated with total")
+                fig = plt.figure(f"Tags significantly correlated with total" +\
+                                    f"threshold = {CORR_THRESH}")
+                fig.suptitle(f"Tags significantly correlated with total" +\
+                                    f"threshold = {CORR_THRESH}")
                 filtered_corr.plot(kind='barh')
 
     # -----------------------------------------------------------------------
