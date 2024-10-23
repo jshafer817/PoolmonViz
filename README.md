@@ -100,4 +100,15 @@ Additionally, the visualizer requires the following python packages:
 The steps to install Anaconda can be found on the [Anaconda Site](https://docs.anaconda.com/anaconda/install/).
 Individual python packages can be installed using the steps mentioned [here](https://docs.anaconda.com/anaconda/navigator/tutorials/pandas/). Please use these steps to install numpy, pandas, matplotlib and seaborn.
 
+Notes from Justin:
+python 3.6.9
+pip install -v "Numpy==1.22.4" "Pandas==1.3.1" "matplotlib==3.4.3" seaborn==0.11.2"
+
+powershell -executionpolicy bypass -File .\poolmon-powershell.ps1 -tags FMfn -values DateTime,Tag,PagedUsedBytes,Binary,Description -tagfile pooltag.txt -loop 5 -view csv
+
+python visualize.py -d . -t TotalUsedBytes -et MmSt -it mfel FxL2 -nmc 2 -nh 2
+
+Set-Location "C:\Windows\System32\drivers"
+Select-String -Path *.sys -Pattern "MFeS" -CaseSensitive | Select-Object FileName -Unique
+
 
